@@ -277,6 +277,8 @@ pub struct ParquetSource {
     /// Optional hint for the size of the parquet metadata
     pub(crate) metadata_size_hint: Option<usize>,
     pub(crate) projected_statistics: Option<Statistics>,
+    /// Enable provenance
+    pub(crate) provenance: bool,
 }
 
 impl ParquetSource {
@@ -402,6 +404,12 @@ impl ParquetSource {
         self
     }
 
+    // If enabled, the opener will append provenance information when scanning the data files
+    pub fn with_provenance(mut self, provenance: bool) -> Self {
+        self.provenance = provenance;
+        self
+    }
+
     /// Return the value described in [`Self::with_bloom_filter_on_read`]
     fn bloom_filter_on_read(&self) -> bool {
         self.table_parquet_options.global.bloom_filter_on_read
@@ -502,6 +510,7 @@ impl FileSource for ParquetSource {
             enable_row_group_stats_pruning: self.table_parquet_options.global.pruning,
             schema_adapter_factory,
             coerce_int96,
+            provenance: self.provenance,
         })
     }
 

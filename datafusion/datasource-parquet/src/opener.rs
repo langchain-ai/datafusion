@@ -90,6 +90,8 @@ pub(super) struct ParquetOpener {
     pub enable_row_group_stats_pruning: bool,
     /// Coerce INT96 timestamps to specific TimeUnit
     pub coerce_int96: Option<TimeUnit>,
+    /// Whether to enable provenance information
+    pub provenance: bool,
 }
 
 impl FileOpener for ParquetOpener {
@@ -132,6 +134,7 @@ impl FileOpener for ParquetOpener {
         let limit = self.limit;
 
         let enable_page_index = self.enable_page_index;
+        let provenance = self.provenance;
 
         Ok(Box::pin(async move {
             // Prune this file using the file level statistics.
@@ -274,6 +277,10 @@ impl FileOpener for ParquetOpener {
                 async_file_reader,
                 reader_metadata,
             );
+
+            if provenance {
+                builder = builder.with_provenance();
+            }
 
             let (schema_mapping, adapted_projections) =
                 schema_adapter.map_schema(&physical_file_schema)?;
@@ -636,6 +643,7 @@ mod test {
                 schema_adapter_factory: Arc::new(DefaultSchemaAdapterFactory),
                 enable_row_group_stats_pruning: true,
                 coerce_int96: None,
+                provenance: false,
             }
         };
 
@@ -720,6 +728,7 @@ mod test {
                 schema_adapter_factory: Arc::new(DefaultSchemaAdapterFactory),
                 enable_row_group_stats_pruning: true,
                 coerce_int96: None,
+                provenance: false,
             }
         };
 
@@ -816,6 +825,7 @@ mod test {
                 schema_adapter_factory: Arc::new(DefaultSchemaAdapterFactory),
                 enable_row_group_stats_pruning: true,
                 coerce_int96: None,
+                provenance: false,
             }
         };
         let make_meta = || FileMeta {
